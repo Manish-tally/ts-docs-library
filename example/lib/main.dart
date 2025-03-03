@@ -63,7 +63,7 @@ class _MyAppState extends State<MyApp> {
 
     try {
       final result = await DocumentScanner.selectDocuments(noOfPages: 15);
-      print(result);
+      print("resultis, $result");
 
       if (result != null) {
         final pictures = result['croppedImageResults'] as List<String>;

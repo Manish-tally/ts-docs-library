@@ -36,12 +36,27 @@ struct DocumentScannerHome: View {
     @State private var showImageEditor: Bool = false
     @State private var retakeImage: Bool = false
     @State private var reselectImage: Bool = false
-    @State var selectFromGallery: Bool = false
+    @State private var confirmReselect: Bool = false
+    @State private var selectFromGallery: Bool = false
     @State private var showGallery: Bool = false
     @State private var hasSelectedImage: Bool = false
 //    var onSaveToPDF: ((URL) -> Void)?
     var onSave: (([String])->Void)?
-    
+
+      init(initialImage: UIImage? = nil, selectFromGallery: Bool = false,onSave: (([String]) -> Void)? = nil) {
+            self.onSave  = onSave
+            print(selectFromGallery)
+            _selectFromGallery = State(initialValue: selectFromGallery)
+
+            print(self.selectFromGallery)
+
+            print(initialImage)
+            if let initialImage = initialImage {
+                _images = State(initialValue: [ScannedImage(originalImage: initialImage)])
+            } else {
+                _images = State(initialValue: [])
+            }
+        }
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
@@ -178,6 +193,7 @@ struct DocumentScannerHome: View {
                 TabButton(icon: selectFromGallery ? "photo.on.rectangle" : "camera", label: selectFromGallery ? "Reselect" : "Retake") {
                     if selectFromGallery {
                         reselectImage = true
+                      print("Reselect button pressed. reselectImage: \(reselectImage)")
                     } else {
                         retakeImage = true
                     }
@@ -250,10 +266,15 @@ struct DocumentScannerHome: View {
         }
         // When "Reselect" is pressed
         .fullScreenCover(isPresented: $reselectImage) {
+            let wasReselecting = reselectImage
             ImagePickerView(onSelect: {image in
+            print("Image selected for reselect. reselectImage: \(reselectImage)  \(wasReselecting)")
                 selectedImage = image
                 hasSelectedImage = true
+                confirmReselect = true
+
             }, onDismiss: {
+             print("ImagePickerView dismissed. reselectImage: \(reselectImage)")
                 dismissViewIfEmpty()
             })
         }
@@ -266,30 +287,39 @@ struct DocumentScannerHome: View {
                 dismissViewIfEmpty()
             })
         }
+
         // After user selects an image from "Gallery" on new or "Reselect"
         .fullScreenCover(isPresented: $hasSelectedImage) {
+
             let filename = "Page_\(reselectImage ? selectedIndex + 1 : images.count + 1)"
+            let shouldReplace = reselectImage
+
             DocumentScannerPreviewView(
                 image: $selectedImage, quad: .constant(nil), isEditing: true, onImageEdited: {
                     originalImage, editedImage, quad in
-                
+
                 let scannedImage = ScannedImage(
                     originalImage: originalImage,
                     croppedImage: editedImage,
                     quad: quad
                 )
-                
-                if reselectImage {
+                print("DocumentScannerPreviewView presented. reselectImage: \(reselectImage), shouldReplace: \(shouldReplace)")
+                if confirmReselect {
+                print("hey replacing at index",selectedIndex);
                     replaceAtIndex(selectedIndex, newScannedImage: scannedImage)
                 } else {
+                   print("hey appending at index",selectedIndex);
                     self.images.append(scannedImage)
+
                     selectedIndex = images.count - 1
                 }
                 self.reselectImage = false
+                self.confirmReselect=false
             }, onDismiss: {
                 dismissViewIfEmpty()
             })
         }
+
         .onAppear() {
             if self.images.count == 0 {
                 if selectFromGallery {
@@ -352,61 +382,63 @@ struct DocumentScannerHome: View {
     }
 }
 
-struct ImagePickerView: UIViewControllerRepresentable {
-    var onSelect: (UIImage) -> Void
-    var onDismiss: () -> Void
-    
-    class Coordinator: NSObject, UINavigationControllerDelegate, UIImagePickerControllerDelegate {
-        var parent: ImagePickerView
-        var onSelect: (UIImage) -> Void
-        var onDismiss: (() -> Void)?
-        
-        init(parent: ImagePickerView, onSelect: @escaping (UIImage) -> Void, onDismiss: @escaping () -> Void) {
-            self.parent = parent
-            self.onSelect = onSelect
-            self.onDismiss = onDismiss
-        }
-        
-        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
-            picker.dismiss(animated: true, completion: {[weak self] in
-                self?.parent.onDismiss()
-            })
-        }
-        
-        func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
-            if let image = info[.originalImage] as? UIImage {
-                
-                picker.dismiss(animated: true, completion: {[weak self] in
-                    self?.parent.onSelect(image)
-                })
-            } else {
-                picker.dismiss(animated: true, completion: {[weak self] in
-                    self?.parent.onDismiss()
-                })
-            }
-        }
-    }
-    
-    func makeCoordinator() -> Coordinator {
-        Coordinator(parent: self, onSelect: onSelect, onDismiss: onDismiss)
-    }
-    
-    func makeUIViewController(context: Context) -> UIImagePickerController {
-        let picker = UIImagePickerController()
-        picker.delegate = context.coordinator
-        picker.sourceType = .photoLibrary
-        return picker
-    }
-    
-    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
-}
+
+
+//struct ImagePickerView: UIViewControllerRepresentable {
+//    var onSelect: (UIImage) -> Void
+//    var onDismiss: () -> Void
+//
+//    class Coordinator: NSObject, UINavigationControllerDelegate, UIImagePickerControllerDelegate {
+//        var parent: ImagePickerView
+//        var onSelect: (UIImage) -> Void
+//        var onDismiss: (() -> Void)?
+//
+//        init(parent: ImagePickerView, onSelect: @escaping (UIImage) -> Void, onDismiss: @escaping () -> Void) {
+//            self.parent = parent
+//            self.onSelect = onSelect
+//            self.onDismiss = onDismiss
+//        }
+//
+//        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+//            picker.dismiss(animated: true, completion: {[weak self] in
+//                self?.parent.onDismiss()
+//            })
+//        }
+//
+//        func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
+//            if let image = info[.originalImage] as? UIImage {
+//
+//                picker.dismiss(animated: true, completion: {[weak self] in
+//                    self?.parent.onSelect(image)
+//                })
+//            } else {
+//                picker.dismiss(animated: true, completion: {[weak self] in
+//                    self?.parent.onDismiss()
+//                })
+//            }
+//        }
+//    }
+//
+//    func makeCoordinator() -> Coordinator {
+//        Coordinator(parent: self, onSelect: onSelect, onDismiss: onDismiss)
+//    }
+//
+//    func makeUIViewController(context: Context) -> UIImagePickerController {
+//        let picker = UIImagePickerController()
+//        picker.delegate = context.coordinator
+//        picker.sourceType = .photoLibrary
+//        return picker
+//    }
+//
+//    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
+//}
 
 struct TabButton : View {
     var icon: String
     var label: String
     var action: () -> Void
-    
-    
+
+
     var body : some View {
         Button(action: action) {
             VStack {

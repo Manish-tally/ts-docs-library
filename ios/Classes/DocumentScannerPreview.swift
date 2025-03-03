@@ -20,9 +20,9 @@ struct DocumentScannerPreviewView: View {
                             onImageEdited(originalImage, editedImage, quad)
                         }
                         if isEditing {
-                            if let onDismiss = onDismiss {
-                                onDismiss()
-                            }
+//                            if let onDismiss = onDismiss {
+//                                onDismiss()
+//                            }
                             dismiss()
                         }
                         

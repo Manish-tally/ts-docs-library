@@ -49,10 +49,22 @@ class DocumentScanner {
         'noOfPages': noOfPages,
         'sharedFiles': sharedFiles
       });
+      print("resultant $result");
 
+      if (defaultTargetPlatform == TargetPlatform.iOS) {
+        print("i am inside ios");
+        if (result != null && result is List) {
+          // Convert the result to a Map<String, dynamic>
+          return {
+            'croppedImageResults': result.map((e) => e as String).toList(),
+            'filename': '', // Add a default filename or modify as needed
+          };
+        }
+      }
       if (result != null && result is Map) {
         final croppedImageResults = List<String>.from(result['croppedImageResults'] ?? []);
         final filename = result['filename'] ?? '';
+
 
         return {'croppedImageResults': croppedImageResults, 'filename': filename};
       }
