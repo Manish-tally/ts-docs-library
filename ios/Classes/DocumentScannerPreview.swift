@@ -8,6 +8,7 @@ struct DocumentScannerPreviewView: View {
     var isEditing: Bool = false
     var onImageEdited: ((UIImage, UIImage, Quadrilateral?) -> Void)?
     var onDismiss: (() -> Void)?
+    @State private var showAlert = false
     
     @Environment(\.dismiss) private var dismiss
         
@@ -42,15 +43,19 @@ struct DocumentScannerPreviewView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button(action: {
-                        if let onDismiss = onDismiss {
-                            onDismiss()
-                        }
-                        dismiss()
+                            showAlert = true
                     }) {
                         Image(systemName: "xmark")
                             .font(.system(size: 18, weight: .bold))
                             .foregroundColor(.white)
-                    }
+                    }.alert("Discard Documents?", isPresented: $showAlert) {
+                                          Button("Keep editing", role: .cancel) { } // Do nothing on cancel
+                                          Button("Discard", role: .destructive) {
+                                              dismiss() // Dismiss the view if user confirms
+                                          }
+                                      } message: {
+                                          Text("If you leave now, Your progress will be lost.")
+                                      }
                 }
                 
                 ToolbarItem(placement: .principal) {
@@ -191,6 +196,12 @@ struct EditImageViewControllerWrapper: UIViewControllerRepresentable {
         func cropped(image: UIImage, quad: Quadrilateral?) {
             onCropped(image, quad)
         }
+        deinit {
+                NotificationCenter.default.removeObserver(self, name: .cropImage, object: nil)
+                NotificationCenter.default.removeObserver(self, name: .rotateImage, object: nil)
+                NotificationCenter.default.removeObserver(self, name: .resetCrop, object: nil)
+                NotificationCenter.default.removeObserver(self, name: .autoCrop, object: nil)
+            }
     }
 }
 

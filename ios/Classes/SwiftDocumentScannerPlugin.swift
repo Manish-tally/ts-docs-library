@@ -30,14 +30,21 @@ if (call.method == "getPictures") {
                 // Handle captured image
                 if let viewController = UIApplication.shared.delegate?.window??.rootViewController as? FlutterViewController {
                     // Pass captured image to DocumentScannerHome
-                    let documentScannerView = DocumentScannerHome(initialImage: editedImage, selectFromGallery: false)
-                    let documentScannerViewController = UIHostingController(rootView: documentScannerView)
+                    let documentScannerView = DocumentScannerHome(initialImage: editedImage, selectFromGallery: false,
+                     onSave: { [weak self] images, name in
+                                                                                    print("Camera  image RECEIVED:", images, "NAME:", name)
 
-                    documentScannerViewController.rootView.onSave = { [weak self] images in
-                        print("IMAGES RECEIVED", images)
-                        self?.resultChannel?(images)
-                        self?.resultChannel = nil
-                    }
+                                                                                    // Send images and name back to Flutter
+                                                                                    self?.resultChannel?(["images": images, "name": name])
+                                                                                    self?.resultChannel = nil
+                                                                                })
+                    let documentScannerViewController = UIHostingController(rootView: documentScannerView)
+//
+//                    documentScannerViewController.rootView.onSave = { [weak self] images in
+//                        print("IMAGES RECEIVED", images)
+//                        self?.resultChannel?(images)
+//                        self?.resultChannel = nil
+//                    }
 
                     // Ensure the view controller is in the window hierarchy
                     DispatchQueue.main.async {
@@ -63,158 +70,7 @@ if (call.method == "getPictures") {
     }
 }
 
-//        if (call.method == "getPictures")
-//        {
-//            print("Hello", "getPictures")
-//            if let viewController = UIApplication.shared.delegate?.window??.rootViewController as? FlutterViewController {
-//                // let destinationViewController = HomeViewController()
-//                // destinationViewController.setParams(saveTo: saveTo, canUseGallery: canUseGallery)
-//                // destinationViewController._result = result
-//                // viewController.present(destinationViewController,animated: true,completion: nil);
-//
-//                self.resultChannel = result
-//
-//                let documentScannerView = DocumentScannerHome()
-//                let documentScannerViewController = UIHostingController(rootView: documentScannerView)
-//
-//                documentScannerViewController.rootView.onSave = { [weak self] images in
-//                    print("IMAGES RECEIVED", images)
-//                    self?.resultChannel?(images)
-//                    self?.resultChannel = nil
-//                }
-//
-//                documentScannerViewController.modalPresentationStyle = .fullScreen
-//                viewController.present(documentScannerViewController, animated: true, completion: nil)
-//            }
-//        }
-//        if (call.method == "selectDocuments")
-//        {
-//            print("Hello", "selectDocuments")
-//            if let viewController = UIApplication.shared.delegate?.window??.rootViewController as? FlutterViewController {
-//                self.resultChannel = result
-//
-//                let documentScannerView = DocumentScannerHome(selectFromGallery: true)
-//                let documentScannerViewController = UIHostingController(rootView: documentScannerView)
-//
-//                documentScannerViewController.rootView.onSave = { [weak self] images in
-//                    print("IMAGES RECEIVED", images)
-//                    self?.resultChannel?(images)
-//                    self?.resultChannel = nil
-//                }
-//
-//                documentScannerViewController.modalPresentationStyle = .fullScreen
-//                viewController.present(documentScannerViewController, animated: true, completion: nil)
-//            }
-//        }
-// if (call.method == "selectDocuments") {
-//            print("Hello", "selectDocuments")
-//            if let viewController = UIApplication.shared.delegate?.window??.rootViewController as? FlutterViewController {
-//                self.resultChannel = result
-//
-//                // Open Image Picker First
-//                self.imagePicker = UIImagePickerController()
-//                self.imagePicker?.sourceType = .photoLibrary
-//                self.imagePicker?.delegate = self
-//                self.imagePicker?.allowsEditing = true
-//
-//                viewController.present(self.imagePicker!, animated: true, completion: nil)
-//            }
-//            }
-//if call.method == "selectDocuments" {
-//        print("Hello", "selectDocuments")
-//        if let viewController = UIApplication.shared.delegate?.window??.rootViewController as? FlutterViewController {
-//            self.resultChannel = result
-//
-//            // Use ImagePickerView instead of UIImagePickerController
-//            let imagePickerView = ImagePickerView(
-//                onSelect: { [weak self] image in
-//                    // Handle selected image
-//                    if let viewController = UIApplication.shared.delegate?.window??.rootViewController as? FlutterViewController {
-//                        // Pass selected image to DocumentScannerHome
-//                        let documentScannerView = DocumentScannerHome(initialImage: image, selectFromGallery: true,hasSelectedImage:true)
-//                        let documentScannerViewController = UIHostingController(rootView: documentScannerView)
-//
-//                        documentScannerViewController.rootView.onSave = { [weak self] images in
-//                            print("IMAGES RECEIVED", images)
-//                            self?.resultChannel?(images)
-//                            self?.resultChannel = nil
-//                        }
-//
-//                        documentScannerViewController.modalPresentationStyle = .fullScreen
-//                        viewController.present(documentScannerViewController, animated: true, completion: nil)
-//                    }
-//                },
-//                onDismiss: { [weak self] in
-//                    // Handle dismissal
-//                    self?.resultChannel?(FlutterError(code: "CANCELLED", message: "User cancelled image selection", details: nil))
-//                    self?.resultChannel = nil
-//                }
-//            )
-//
-//            let imagePickerViewController = UIHostingController(rootView: imagePickerView)
-//            imagePickerViewController.modalPresentationStyle = .fullScreen
-//            viewController.present(imagePickerViewController, animated: true, completion: nil)
-//        }
-//        }
-//
-//if call.method == "selectDocuments" {
-//        print("Hello", "selectDocuments")
-//        if let viewController = UIApplication.shared.delegate?.window??.rootViewController as? FlutterViewController {
-//            self.resultChannel = result
-//
-//            // Use ImagePickerView
-//            let imagePickerView = ImagePickerView(
-//                onSelect: { [weak self] image in
-//                    // Handle selected image
-//                    if let viewController = UIApplication.shared.delegate?.window??.rootViewController as? FlutterViewController {
-//                        // Pass selected image to DocumentScannerPreviewView
-//                        let documentScannerPreviewView = DocumentScannerPreviewView(
-//                            image: .constant(image),
-//                            quad: .constant(nil),
-//                            isEditing: true,
-//                            onImageEdited: { originalImage, editedImage, quad in
-//                                // Pass edited image to DocumentScannerHome
-//                                let documentScannerView = DocumentScannerHome(initialImage: editedImage, selectFromGallery: true)
-//                                let documentScannerViewController = UIHostingController(rootView: documentScannerView)
-//
-//                                documentScannerViewController.rootView.onSave = { [weak self] images in
-//                                    print("IMAGES RECEIVED", images)
-//                                    self?.resultChannel?(images)
-//                                    self?.resultChannel = nil
-//                                }
-//  DispatchQueue.main.async {
-//                                documentScannerViewController.modalPresentationStyle = .fullScreen
-//                                viewController.present(documentScannerViewController, animated: true, completion: nil)
-//                                }
-//                            },
-//                            onDismiss: {
-//                                // Handle dismissal
-//                                self?.resultChannel?(FlutterError(code: "CANCELLED", message: "User cancelled image selection", details: nil))
-//                                self?.resultChannel = nil
-//                            }
-//                        )
-//
-//                        let documentScannerPreviewViewController = UIHostingController(rootView: documentScannerPreviewView)
-//                        documentScannerPreviewViewController.modalPresentationStyle = .fullScreen
-//                          DispatchQueue.main.async {
-//                        viewController.present(documentScannerPreviewViewController, animated: true, completion: nil)
-//                        }
-//                    }
-//                },
-//                onDismiss: { [weak self] in
-//                    // Handle dismissal
-//                    self?.resultChannel?(FlutterError(code: "CANCELLED", message: "User cancelled image selection", details: nil))
-//                    self?.resultChannel = nil
-//                }
-//            )
-//
-//            let imagePickerViewController = UIHostingController(rootView: imagePickerView)
-//            imagePickerViewController.modalPresentationStyle = .fullScreen
-//              DispatchQueue.main.async {
-//            viewController.present(imagePickerViewController, animated: true, completion: nil)
-//            }
-//        }
-//    }
+
 if call.method == "selectDocuments" {
     print("Hello", "selectDocuments")
     if let viewController = UIApplication.shared.delegate?.window??.rootViewController as? FlutterViewController {
@@ -232,14 +88,22 @@ if call.method == "selectDocuments" {
                         isEditing: true,
                         onImageEdited: { originalImage, editedImage, quad in
                             // Pass edited image to DocumentScannerHome
-                            let documentScannerView = DocumentScannerHome(initialImage: editedImage, selectFromGallery: true)
+                            let documentScannerView = DocumentScannerHome(initialImage: editedImage, selectFromGallery: true,
+                               onSave: { [weak self] images, name in
+                                                                print("IMAGES RECEIVED:", images, "NAME:", name)
+
+                                                                // Send images and name back to Flutter
+                                                                self?.resultChannel?(["images": images, "name": name])
+                                                                self?.resultChannel = nil
+                                                            })
                             let documentScannerViewController = UIHostingController(rootView: documentScannerView)
 
-                            documentScannerViewController.rootView.onSave = { [weak self] images in
-                                print("IMAGES RECEIVED", images)
-                                self?.resultChannel?(images)
-                                self?.resultChannel = nil
-                            }
+//                            documentScannerViewController.rootView.onSave = { [weak self] images in
+//                                print("IMAGES RECEIVED", images)
+//
+//                                self?.resultChannel?(images)
+//                                self?.resultChannel = nil
+//                            }
 
                             // Ensure the view controller is in the window hierarchy
                             DispatchQueue.main.async {

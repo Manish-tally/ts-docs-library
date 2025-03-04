@@ -27,6 +27,7 @@ struct ScannedImage {
 struct DocumentScannerHome: View {
     @State private var name: String = ""
     @State private var openNameChangeAlert: Bool = false
+    @State private var tempName: String = ""
     @State private var selectedImage: UIImage?
     @State private var images: [ScannedImage] = [
         // ScannedImage(originalImage: UIImage(imageLiteralResourceName: "IMG_9133"))
@@ -40,10 +41,12 @@ struct DocumentScannerHome: View {
     @State private var selectFromGallery: Bool = false
     @State private var showGallery: Bool = false
     @State private var hasSelectedImage: Bool = false
+    @State private var showAlert = false
 //    var onSaveToPDF: ((URL) -> Void)?
-    var onSave: (([String])->Void)?
+   // var onSave: (([String])->Void)?
+    var onSave: (([String], String) -> Void)?
 
-      init(initialImage: UIImage? = nil, selectFromGallery: Bool = false,onSave: (([String]) -> Void)? = nil) {
+      init(initialImage: UIImage? = nil, selectFromGallery: Bool = false, onSave: (([String], String) -> Void)? = nil ) {
             self.onSave  = onSave
             print(selectFromGallery)
             _selectFromGallery = State(initialValue: selectFromGallery)
@@ -64,12 +67,19 @@ struct DocumentScannerHome: View {
             // Header Bar
             HStack {
                 Button(action: {
-                    dismiss()
+                     showAlert = true
                 }) {
                     Image(systemName: "xmark")
                         .font(.system(size: 20, weight: .bold))
                         .foregroundColor(.white)
-                }
+                }.alert("Discard Documents?", isPresented: $showAlert) {
+                     Button("Keep editing", role: .cancel) { } // Do nothing on cancel
+                     Button("Discard", role: .destructive) {
+                         dismiss() // Dismiss the view if user confirms
+                     }
+                 } message: {
+                     Text("If you leave now, Your progress will be lost.")
+                 }
                 
                 Text("Preview")
                     .font(.title2)
@@ -79,9 +89,9 @@ struct DocumentScannerHome: View {
                 Spacer()
                 
                 Button("Done") {
-                    
+                    let imagePaths = images.compactMap { $0.croppedImagePath ?? $0.originalImagePath }
                     if let onSave = onSave {
-                        onSave(images.compactMap { $0.croppedImagePath ?? $0.originalImagePath })
+                        onSave(imagePaths,name)
                     }
                     dismiss()
                 }
@@ -95,8 +105,46 @@ struct DocumentScannerHome: View {
             .padding(EdgeInsets(top: 0, leading: 16, bottom: 8, trailing: 16))
             .background(Color.gray.opacity(0.2))
             .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: 2)
-            
-            
+
+if images.count > 0 {
+    Button(action: {
+        tempName = name // Store the current name in a temp variable
+        openNameChangeAlert.toggle()
+    }) {
+        HStack(spacing: 8) {
+            VStack(spacing: 2) {
+                Text(name)
+                    .font(.callout)
+                    .foregroundColor(.white)
+                    .background(
+                        GeometryReader { geometry in
+                            Rectangle()
+                                .frame(width: geometry.size.width, height: 1) // Set width dynamically
+                                .offset(y: geometry.size.height + 2) // Position below text
+                                .foregroundColor(.white)
+                        }
+                    )
+            }
+
+            Image(systemName: "highlighter")
+                .font(.system(size: 18, weight: .bold))
+                .foregroundColor(.white)
+        }
+        .padding(.horizontal, 8)
+    }
+    .padding(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+    .alert("Rename Document", isPresented: $openNameChangeAlert) {
+        TextField("Enter name", text: $tempName)
+        Button("OK") {
+            name = tempName
+        }
+        Button("Cancel", role: .cancel) { }
+    } message: {
+        Text("Enter a name for the document")
+    }
+}
+
+
             if images.count > 0 {
                 // TODO: Rename
 //                Button(action: {
@@ -266,9 +314,8 @@ struct DocumentScannerHome: View {
         }
         // When "Reselect" is pressed
         .fullScreenCover(isPresented: $reselectImage) {
-            let wasReselecting = reselectImage
+
             ImagePickerView(onSelect: {image in
-            print("Image selected for reselect. reselectImage: \(reselectImage)  \(wasReselecting)")
                 selectedImage = image
                 hasSelectedImage = true
                 confirmReselect = true
@@ -314,8 +361,11 @@ struct DocumentScannerHome: View {
                     selectedIndex = images.count - 1
                 }
                 self.reselectImage = false
-                self.confirmReselect=false
+                self.confirmReselect = false
             }, onDismiss: {
+
+                self.reselectImage = false
+                self.confirmReselect = false
                 dismissViewIfEmpty()
             })
         }
@@ -330,11 +380,13 @@ struct DocumentScannerHome: View {
             }
             
             if self.name.isEmpty {
-                let currentDate = Date()
-                let formatter = DateFormatter()
-                formatter.dateFormat = "MMM-dd-HHmm"
+//                let currentDate = Date()
+//                let formatter = DateFormatter()
+//                formatter.dateFormat = "MMM-dd-HHmm"
+                let currentTime = Int(Date().timeIntervalSince1970)
+                self.name = "Scanned_\(currentTime)"
                 
-                self.name = "Scanned_\(formatter.string(from: currentDate))"
+                //self.name = "Scanned_\(formatter.string(from: currentDate))"
             }
         }
     }

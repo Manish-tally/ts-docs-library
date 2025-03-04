@@ -6,6 +6,7 @@ struct DocumentScannerCameraView: View {
     @State private var capturedImage: UIImage?
     @State private var capturedQuad: Quadrilateral?
     @State private var isTorchOn = false
+    @State private var showAlert = false
     
     var onImageCaptured: ((UIImage, UIImage, Quadrilateral?) -> Void)?
     var onImageCaptureCancelled: (() -> Void)?
@@ -48,15 +49,20 @@ struct DocumentScannerCameraView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button(action: {
-                        if let onImageCaptureCancelled = onImageCaptureCancelled {
-                            onImageCaptureCancelled()
-                        }
-                        dismiss()
+                     showAlert = true
                     }) {
                         Image(systemName: "xmark")
                             .font(.system(size: 18, weight: .bold))
                             .foregroundColor(.white)
-                    }
+                    }.alert("Discard Documents?", isPresented: $showAlert) {
+                                                               Button("Keep editing", role: .cancel) { } // Do nothing on cancel
+                                                               Button("Discard", role: .destructive) {
+                                                                   dismiss() // Dismiss the view if user confirms
+                                                               }
+                                                           } message: {
+                                                               Text("If you leave now, Your progress will be lost.")
+                                                           }
+
                 }
                 
                 ToolbarItem(placement: .principal) {

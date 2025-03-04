@@ -92,13 +92,29 @@ class _MyAppState extends State<MyApp> {
   void onPressed() async {
     List<String> pictures;
     try {
-      pictures = await DocumentScanner.getPictures(noOfPages: 15, isGalleryImportAllowed: true) ?? [];
-      print(pictures);
+      final result = await DocumentScanner.getPictures(noOfPages: 15, isGalleryImportAllowed: true) ?? [];
+      print("resultis, $result");
+      if(result != null && result is Map<String, dynamic>) {
+      final pictures = result['croppedImageResults'] as List<String>;
+      final filename = result['filename'] as String;
+
+      print("Cropped images: $pictures");
+      print("Filename: $filename");
+
+      // Ensure widget is still mounted before calling setState
       if (!mounted) return;
+
       setState(() {
         _pictures = pictures;
+        _filename = filename ?? '';
       });
-    } catch (exception) {
+          //
+      // print(pictures);
+      // if (!mounted) return;
+      // setState(() {
+      //   _pictures = pictures;
+      // });
+    } }catch (exception) {
       // Handle exception here
     }
   }
